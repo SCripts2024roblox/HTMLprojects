@@ -180,6 +180,13 @@
             font-weight: 600;
             font-size: 16px;
             flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .message-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .message.system .message-avatar {
@@ -241,6 +248,44 @@
             text-align: center;
         }
 
+        .message-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 12px;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .message-image:hover {
+            transform: scale(1.02);
+        }
+
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            cursor: pointer;
+        }
+
+        .image-modal.show {
+            display: flex;
+        }
+
+        .image-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 12px;
+        }
+
         .typing-indicator {
             display: none;
             padding: 10px 20px;
@@ -265,6 +310,77 @@
             display: flex;
             gap: 12px;
             align-items: center;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-button {
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 46px;
+            height: 46px;
+        }
+
+        .file-button:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .file-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .image-preview-container {
+            display: none;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .image-preview-container.show {
+            display: block;
+        }
+
+        .image-preview {
+            position: relative;
+            display: inline-block;
+        }
+
+        .image-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .image-preview-remove {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background: rgba(239, 68, 68, 0.9);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
         }
 
         .chat-input {
@@ -355,6 +471,50 @@
         .username-card p {
             color: rgba(255, 255, 255, 0.6);
             margin-bottom: 30px;
+        }
+
+        .avatar-upload-section {
+            margin-bottom: 25px;
+        }
+
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 40px;
+            font-weight: 600;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .avatar-preview:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-upload-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .avatar-upload-label:hover {
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .username-input {
@@ -453,10 +613,25 @@
     <div class="username-modal" id="usernameModal">
         <div class="username-card">
             <h2>Ласкаво просимо</h2>
-            <p>Введіть ваше ім'я для початку</p>
+            <p>Налаштуйте свій профіль</p>
+            
+            <div class="avatar-upload-section">
+                <div class="avatar-preview" id="avatarPreviewSetup" onclick="document.getElementById('avatarInputSetup').click()">
+                    <span id="avatarLetterSetup">?</span>
+                </div>
+                <input type="file" id="avatarInputSetup" accept="image/*" style="display: none;">
+                <label class="avatar-upload-label" onclick="document.getElementById('avatarInputSetup').click()">
+                    Натисніть, щоб завантажити аватар
+                </label>
+            </div>
+            
             <input type="text" class="username-input" id="usernameInput" placeholder="Ваше ім'я..." maxlength="20">
             <button class="username-button" id="usernameButton">Почати чат</button>
         </div>
+    </div>
+
+    <div class="image-modal" id="imageModal">
+        <img src="" alt="Full size image" id="modalImage">
     </div>
 
     <div class="chat-container">
@@ -480,8 +655,21 @@
             Хтось друкує...
         </div>
 
+        <div class="image-preview-container" id="imagePreviewContainer">
+            <div class="image-preview">
+                <img src="" alt="Preview" id="imagePreview">
+                <div class="image-preview-remove" onclick="removeImagePreview()">×</div>
+            </div>
+        </div>
+
         <div class="chat-input-container">
             <div class="chat-input-wrapper">
+                <label class="file-button" for="imageInput" title="Завантажити зображення">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </label>
+                <input type="file" id="imageInput" class="file-input" accept="image/*">
                 <input type="text" class="chat-input" id="messageInput" placeholder="Напишіть повідомлення..." disabled>
                 <button class="send-button" id="sendButton" disabled>Надіслати</button>
             </div>
@@ -492,17 +680,85 @@
     <script>
         let socket;
         let username = '';
+        let userAvatar = null;
+        let currentImage = null;
+        let userAvatars = new Map(); // username -> avatar
         let typingTimer;
 
         const usernameModal = document.getElementById('usernameModal');
         const usernameInput = document.getElementById('usernameInput');
         const usernameButton = document.getElementById('usernameButton');
+        const avatarInputSetup = document.getElementById('avatarInputSetup');
+        const avatarPreviewSetup = document.getElementById('avatarPreviewSetup');
+        const avatarLetterSetup = document.getElementById('avatarLetterSetup');
         const chatMessages = document.getElementById('chatMessages');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreview = document.getElementById('imagePreview');
         const onlineCount = document.getElementById('onlineCount');
         const typingIndicator = document.getElementById('typingIndicator');
         const connectionStatus = document.getElementById('connectionStatus');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+
+        // Avatar upload for setup
+        avatarInputSetup.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    userAvatar = event.target.result;
+                    avatarPreviewSetup.innerHTML = `<img src="${userAvatar}" alt="Avatar">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Update avatar letter when typing username
+        usernameInput.addEventListener('input', function() {
+            const letter = usernameInput.value.charAt(0).toUpperCase() || '?';
+            if (!userAvatar) {
+                avatarLetterSetup.textContent = letter;
+            }
+        });
+
+        // Image upload for messages
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                // Check file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Файл занадто великий. Максимум 5MB');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentImage = event.target.result;
+                    imagePreview.src = currentImage;
+                    imagePreviewContainer.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Image modal
+        imageModal.addEventListener('click', function() {
+            imageModal.classList.remove('show');
+        });
+
+        function removeImagePreview() {
+            currentImage = null;
+            imagePreviewContainer.classList.remove('show');
+            imageInput.value = '';
+        }
+
+        function openImageModal(src) {
+            modalImage.src = src;
+            imageModal.classList.add('show');
+        }
 
         // Initialize Socket.io connection
         function initSocket() {
@@ -513,7 +769,7 @@
                 showConnectionStatus('Підключено', true);
                 
                 if (username) {
-                    socket.emit('set username', username);
+                    socket.emit('set username', { username, avatar: userAvatar });
                     messageInput.disabled = false;
                     sendButton.disabled = false;
                 }
@@ -530,6 +786,20 @@
                 messages.forEach(msg => {
                     displayMessage(msg);
                 });
+            });
+
+            socket.on('load avatars', (avatars) => {
+                avatars.forEach(user => {
+                    if (user.avatar) {
+                        userAvatars.set(user.username, user.avatar);
+                    }
+                });
+            });
+
+            socket.on('user avatar', (data) => {
+                if (data.avatar) {
+                    userAvatars.set(data.username, data.avatar);
+                }
             });
 
             socket.on('new message', (message) => {
@@ -571,9 +841,12 @@
 
             username = input;
             localStorage.setItem('chatUsername', username);
+            if (userAvatar) {
+                localStorage.setItem('chatAvatar', userAvatar);
+            }
             usernameModal.classList.add('hidden');
             
-            socket.emit('set username', username);
+            socket.emit('set username', { username, avatar: userAvatar });
             messageInput.disabled = false;
             sendButton.disabled = false;
             messageInput.focus();
@@ -581,14 +854,16 @@
 
         function sendMessage() {
             const message = messageInput.value.trim();
-            if (message.length === 0) return;
+            if (message.length === 0 && !currentImage) return;
 
             socket.emit('send message', {
                 author: username,
-                text: message
+                text: message,
+                image: currentImage
             });
 
             messageInput.value = '';
+            removeImagePreview();
             socket.emit('stop typing');
         }
 
@@ -601,7 +876,6 @@
                 messageDiv.className = messageData.author === username ? 'message own' : 'message';
             }
             
-            const avatar = messageData.author.charAt(0).toUpperCase();
             const time = new Date(messageData.timestamp).toLocaleTimeString('uk-UA', { 
                 hour: '2-digit', 
                 minute: '2-digit' 
@@ -615,11 +889,29 @@
                     </div>
                 `;
             } else {
+                const avatar = messageData.author.charAt(0).toUpperCase();
+                const avatarSrc = userAvatars.get(messageData.author);
+                
+                let avatarHtml;
+                if (avatarSrc) {
+                    avatarHtml = `<div class="message-avatar"><img src="${avatarSrc}" alt="${avatar}"></div>`;
+                } else {
+                    avatarHtml = `<div class="message-avatar">${avatar}</div>`;
+                }
+
+                let contentHtml = '';
+                if (messageData.text) {
+                    contentHtml += `<div class="message-bubble">${escapeHtml(messageData.text)}</div>`;
+                }
+                if (messageData.image) {
+                    contentHtml += `<img src="${messageData.image}" alt="Image" class="message-image" onclick="openImageModal('${messageData.image}')">`;
+                }
+
                 messageDiv.innerHTML = `
-                    <div class="message-avatar">${avatar}</div>
+                    ${avatarHtml}
                     <div class="message-content">
                         <div class="message-author">${escapeHtml(messageData.author)}</div>
-                        <div class="message-bubble">${escapeHtml(messageData.text)}</div>
+                        ${contentHtml}
                         <div class="message-time">${time}</div>
                     </div>
                 `;
@@ -664,8 +956,16 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             const savedUsername = localStorage.getItem('chatUsername');
+            const savedAvatar = localStorage.getItem('chatAvatar');
+            
             if (savedUsername) {
                 usernameInput.value = savedUsername;
+                avatarLetterSetup.textContent = savedUsername.charAt(0).toUpperCase();
+            }
+            
+            if (savedAvatar) {
+                userAvatar = savedAvatar;
+                avatarPreviewSetup.innerHTML = `<img src="${savedAvatar}" alt="Avatar">`;
             }
             
             initSocket();
