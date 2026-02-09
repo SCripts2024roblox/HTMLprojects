@@ -1,14 +1,16 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, {
+  maxHttpBufferSize: 5e6 // 5MB max file size
+});
 const path = require('path');
 
 const PORT = process.env.PORT || 3000;
 
 // Store messages in memory (for production use database)
 let messages = [];
-let users = new Map(); // socketId -> username
+let users = new Map(); // socketId -> {username, avatar}
 
 // Serve static files
 app.use(express.static('public'));
@@ -24,19 +26,35 @@ io.on('connection', (socket) => {
   // Send existing messages to new user
   socket.emit('load messages', messages);
 
+  // Send all user avatars
+  const userAvatars = Array.from(users.values()).map(u => ({
+    username: u.username,
+    avatar: u.avatar
+  }));
+  socket.emit('load avatars', userAvatars);
+
   // Update online count for all users
   io.emit('online count', users.size + 1);
 
-  // User sets their username
-  socket.on('set username', (username) => {
-    users.set(socket.id, username);
-    console.log(`User ${username} connected`);
+  // User sets their username and avatar
+  socket.on('set username', (data) => {
+    users.set(socket.id, {
+      username: data.username,
+      avatar: data.avatar || null
+    });
+    console.log(`User ${data.username} connected`);
+    
+    // Broadcast user avatar to all
+    io.emit('user avatar', {
+      username: data.username,
+      avatar: data.avatar
+    });
     
     // Broadcast system message
     const systemMessage = {
       id: Date.now(),
       author: 'Система',
-      text: `${username} приєднався до чату`,
+      text: `${data.username} приєднався до чату`,
       timestamp: new Date().toISOString(),
       isSystem: true
     };
@@ -46,12 +64,28 @@ io.on('connection', (socket) => {
     io.emit('online count', users.size);
   });
 
-  // Receive new message
+  // Update user avatar
+  socket.on('update avatar', (data) => {
+    const user = users.get(socket.id);
+    if (user) {
+      user.avatar = data.avatar;
+      users.set(socket.id, user);
+      
+      // Broadcast to all users
+      io.emit('user avatar', {
+        username: user.username,
+        avatar: data.avatar
+      });
+    }
+  });
+
+  // Receive new message (text or image)
   socket.on('send message', (data) => {
     const message = {
       id: Date.now() + Math.random(),
       author: data.author,
-      text: data.text,
+      text: data.text || '',
+      image: data.image || null,
       timestamp: new Date().toISOString(),
       isSystem: false
     };
@@ -78,14 +112,14 @@ io.on('connection', (socket) => {
 
   // User disconnects
   socket.on('disconnect', () => {
-    const username = users.get(socket.id);
-    if (username) {
-      console.log(`User ${username} disconnected`);
+    const user = users.get(socket.id);
+    if (user) {
+      console.log(`User ${user.username} disconnected`);
       
       const systemMessage = {
         id: Date.now(),
         author: 'Система',
-        text: `${username} покинув чат`,
+        text: `${user.username} покинув чат`,
         timestamp: new Date().toISOString(),
         isSystem: true
       };
