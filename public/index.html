@@ -682,7 +682,6 @@
         let username = '';
         let userAvatar = null;
         let currentImage = null;
-        let userAvatars = new Map(); // username -> avatar
         let typingTimer;
 
         const usernameModal = document.getElementById('usernameModal');
@@ -788,20 +787,6 @@
                 });
             });
 
-            socket.on('load avatars', (avatars) => {
-                avatars.forEach(user => {
-                    if (user.avatar) {
-                        userAvatars.set(user.username, user.avatar);
-                    }
-                });
-            });
-
-            socket.on('user avatar', (data) => {
-                if (data.avatar) {
-                    userAvatars.set(data.username, data.avatar);
-                }
-            });
-
             socket.on('new message', (message) => {
                 displayMessage(message);
                 scrollToBottom();
@@ -890,11 +875,10 @@
                 `;
             } else {
                 const avatar = messageData.author.charAt(0).toUpperCase();
-                const avatarSrc = userAvatars.get(messageData.author);
                 
                 let avatarHtml;
-                if (avatarSrc) {
-                    avatarHtml = `<div class="message-avatar"><img src="${avatarSrc}" alt="${avatar}"></div>`;
+                if (messageData.avatar) {
+                    avatarHtml = `<div class="message-avatar"><img src="${messageData.avatar}" alt="${avatar}"></div>`;
                 } else {
                     avatarHtml = `<div class="message-avatar">${avatar}</div>`;
                 }
