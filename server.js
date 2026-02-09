@@ -26,13 +26,6 @@ io.on('connection', (socket) => {
   // Send existing messages to new user
   socket.emit('load messages', messages);
 
-  // Send all user avatars
-  const userAvatars = Array.from(users.values()).map(u => ({
-    username: u.username,
-    avatar: u.avatar
-  }));
-  socket.emit('load avatars', userAvatars);
-
   // Update online count for all users
   io.emit('online count', users.size + 1);
 
@@ -43,12 +36,6 @@ io.on('connection', (socket) => {
       avatar: data.avatar || null
     });
     console.log(`User ${data.username} connected`);
-    
-    // Broadcast user avatar to all
-    io.emit('user avatar', {
-      username: data.username,
-      avatar: data.avatar
-    });
     
     // Broadcast system message
     const systemMessage = {
@@ -64,26 +51,13 @@ io.on('connection', (socket) => {
     io.emit('online count', users.size);
   });
 
-  // Update user avatar
-  socket.on('update avatar', (data) => {
-    const user = users.get(socket.id);
-    if (user) {
-      user.avatar = data.avatar;
-      users.set(socket.id, user);
-      
-      // Broadcast to all users
-      io.emit('user avatar', {
-        username: user.username,
-        avatar: data.avatar
-      });
-    }
-  });
-
   // Receive new message (text or image)
   socket.on('send message', (data) => {
+    const user = users.get(socket.id);
     const message = {
       id: Date.now() + Math.random(),
       author: data.author,
+      avatar: user ? user.avatar : null,
       text: data.text || '',
       image: data.image || null,
       timestamp: new Date().toISOString(),
